@@ -1,10 +1,10 @@
-# Pico-Game-Controller
+# Pico-Game-Controller-PNM
+Minor modification to Speedypotato's PGC firmware to support 9-button Pop'n music mini-controllers with corresponding lighting 
+(Major thanks to KyubiFox and Speedy for help)
+Speedy's discord: https://discord.gg/MmuKd73XbY
 
-Code for a keyboard or game controller using a Raspberry Pi Pico. Capable of handling 11 buttons, 10 LEDs, 1 WS2812B RGB strip, and 2 encoders. Developed with SDVX and IIDX in mind - see branches release/pocket-sdvx-pico and release/pocket-iidx for preconfigured versions.
-
-Demo of this firmware running on Pocket SDVX Pico, purchasable at https://discord.gg/MmuKd73XbY
-
-![Pocket SDVX Pico](demo.gif)
+Demo of lighting effects
+![PMSMall](demo.gif)
 
 Currently working/fixed:
 
@@ -12,7 +12,7 @@ Currently working/fixed:
 - NKRO Keyboard & Mouse Mode - hold first button(gpio4) to enter kb mode
 - HID LEDs with Reactive LED fallback
 - ws2812b rgb on second core
-- 2 ws2812b hid descriptor zones
+- 9 ws2812b hid descriptor zones
 - sdvx/iidx spoof - Tested on EAC - checkout branches release/pocket-sdvx-pico or release/pocket-iidx
 - 1000hz polling
 - Reversable Encoders with debouncing
@@ -20,6 +20,12 @@ Currently working/fixed:
 - Switch and LED pins are now staggered for easier wiring
 - Fix 0-~71% encoder rollover in gamepad mode, uint32 max val isn't divisible evenly by ppr\*4 for joystick - thanks friends
 - HID LEDs now have labels, thanks CrazyRedMachine
+ 
+ 
+Changes for PNM fork:
+- Stripped out encoder function
+- Minor adjustments to LED code, reactive buttons outside of HID with WS2812B
+- Adjusted pinout and number of corresponding switches
 
 TODO:
 

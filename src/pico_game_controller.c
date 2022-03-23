@@ -22,9 +22,6 @@
 #include "ws2812.pio.h"
 
 PIO pio, pio_1;
-uint32_t enc_val[ENC_GPIO_SIZE];
-uint32_t prev_enc_val[ENC_GPIO_SIZE];
-int cur_enc_val[ENC_GPIO_SIZE];
 
 bool prev_sw_val[SW_GPIO_SIZE];
 uint64_t sw_timestamp[SW_GPIO_SIZE];
@@ -48,12 +45,26 @@ union {
   uint8_t raw[LED_GPIO_SIZE + WS2812B_LED_ZONES * 3];
 } lights_report;
 
+uint32_t led_color[WS2812B_LED_SIZE][3] = {
+{255, 255, 255},  // White
+{235, 232, 52},   // Yellow
+{0, 255, 0},      // Green
+{0, 0, 255},      // Blue
+{255, 0, 0},      // Red 
+{0, 0, 255},      // Blue
+{0, 255, 0},      // Green
+{235, 232, 52},   // Yellow
+{255, 255, 255},  // White
+};
+
+
+
 /**
  * WS2812B RGB Assignment
  * @param pixel_grb The pixel color to set
  **/
 static inline void put_pixel(uint32_t pixel_grb) {
-  pio_sm_put_blocking(pio1, ENC_GPIO_SIZE, pixel_grb << 8u);
+  pio_sm_put_blocking(pio1, 0, pixel_grb << 8u);
 }
 
 /**
@@ -90,12 +101,28 @@ void ws2812b_color_cycle(uint32_t counter) {
 }
 
 /**
+ * Reactive Effect
+ **/
+void ws2812b_react() {
+  for (int i = 0; i < WS2812B_LED_SIZE / 2; ++i) {
+      if (!gpio_get(SW_GPIO[i])) {
+        put_pixel(urgb_u32(led_color[i][0], led_color[i][1], led_color[i][2]));
+        put_pixel(urgb_u32(led_color[i][0], led_color[i][1], led_color[i][2]));
+      } else {
+        put_pixel(urgb_u32(0, 0, 0));
+        put_pixel(urgb_u32(0, 0, 0));
+      }
+  }
+}
+
+
+/**
  * WS2812B Lighting
  * @param counter Current number of WS2812B cycles
  **/
 void ws2812b_update(uint32_t counter) {
   if (time_us_64() - reactive_timeout_timestamp >= REACTIVE_TIMEOUT_MAX) {
-    ws2812b_color_cycle(counter);
+    ws2812b_react();
   } else {
     for (int i = 0; i < WS2812B_LED_ZONES; i++) {
       for (int j = 0; j < WS2812B_LEDS_PER_ZONE; j++) {
@@ -152,17 +179,6 @@ void joy_mode() {
     report.buttons = translate_buttons;
 
     // find the delta between previous and current enc_val
-    for (int i = 0; i < ENC_GPIO_SIZE; i++) {
-      cur_enc_val[i] +=
-          ((ENC_REV[i] ? 1 : -1) * (enc_val[i] - prev_enc_val[i]));
-      while (cur_enc_val[i] < 0) cur_enc_val[i] = ENC_PULSE + cur_enc_val[i];
-      cur_enc_val[i] %= ENC_PULSE;
-
-      prev_enc_val[i] = enc_val[i];
-    }
-
-    report.joy0 = ((double)cur_enc_val[0] / ENC_PULSE) * (UINT8_MAX + 1);
-    report.joy1 = ((double)cur_enc_val[1] / ENC_PULSE) * (UINT8_MAX + 1);
 
     tud_hid_n_report(0x00, REPORT_ID_JOYSTICK, &report, sizeof(report));
   }
@@ -189,20 +205,6 @@ void key_mode() {
       }
     }
 
-    /*------------- Mouse -------------*/
-    // find the delta between previous and current enc_val
-    int delta[ENC_GPIO_SIZE] = {0};
-    for (int i = 0; i < ENC_GPIO_SIZE; i++) {
-      delta[i] = (enc_val[i] - prev_enc_val[i]) * (ENC_REV[i] ? 1 : -1);
-      prev_enc_val[i] = enc_val[i];
-    }
-
-    if (kbm_report) {
-      tud_hid_n_report(0x00, REPORT_ID_KEYBOARD, &nkro_report,
-                       sizeof(nkro_report));
-    } else {
-      tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, delta[0], delta[1], 0, 0);
-    }
     // Alternate reports
     kbm_report = !kbm_report;
   }
@@ -223,19 +225,13 @@ void update_inputs() {
 }
 
 /**
- * DMA Encoder Logic For 2 Encoders
+ * Second Core Runnable
  **/
-void dma_handler() {
-  uint i = 1;
-  int interrupt_channel = 0;
-  while ((i & dma_hw->ints0) == 0) {
-    i = i << 1;
-    ++interrupt_channel;
-  }
-  dma_hw->ints0 = 1u << interrupt_channel;
-  if (interrupt_channel < 4) {
-    dma_channel_set_read_addr(interrupt_channel, &pio->rxf[interrupt_channel],
-                              true);
+void core1_entry() {
+  uint32_t counter = 0;
+  while (1) {
+    ws2812b_update(++counter);
+    sleep_ms(5);
   }
 }
 
@@ -248,37 +244,12 @@ void init() {
   gpio_set_dir(25, GPIO_OUT);
   gpio_put(25, 1);
 
-  // Set up the state machine for encoders
-  pio = pio0;
-  uint offset = pio_add_program(pio, &encoders_program);
-
-  // Setup Encoders
-  for (int i = 0; i < ENC_GPIO_SIZE; i++) {
-    enc_val[i], prev_enc_val[i], cur_enc_val[i] = 0;
-    encoders_program_init(pio, i, offset, ENC_GPIO[i], ENC_DEBOUNCE);
-
-    dma_channel_config c = dma_channel_get_default_config(i);
-    channel_config_set_read_increment(&c, false);
-    channel_config_set_write_increment(&c, false);
-    channel_config_set_dreq(&c, pio_get_dreq(pio, i, false));
-
-    dma_channel_configure(i, &c,
-                          &enc_val[i],   // Destinatinon pointer
-                          &pio->rxf[i],  // Source pointer
-                          0x10,          // Number of transfers
-                          true           // Start immediately
-    );
-    irq_set_exclusive_handler(DMA_IRQ_0, dma_handler);
-    irq_set_enabled(DMA_IRQ_0, true);
-    dma_channel_set_irq0_enabled(i, true);
-  }
-
   reactive_timeout_timestamp = time_us_64();
 
   // Set up WS2812B
   pio_1 = pio1;
   uint offset2 = pio_add_program(pio_1, &ws2812_program);
-  ws2812_program_init(pio_1, ENC_GPIO_SIZE, offset2, WS2812B_GPIO, 800000,
+  ws2812_program_init(pio_1, 0, offset2, WS2812B_GPIO, 800000,
                       false);
 
   // Setup Button GPIO
@@ -308,16 +279,10 @@ void init() {
     loop_mode = &joy_mode;
     joy_mode_check = true;
   }
-}
 
-/**
- * Second Core Runnable
- **/
-void core1_entry() {
-  uint32_t counter = 0;
-  while (1) {
-    ws2812b_update(++counter);
-    sleep_ms(5);
+  // Disable RGB
+  if (gpio_get(SW_GPIO[8])) {
+    multicore_launch_core1(core1_entry);
   }
 }
 
@@ -328,8 +293,6 @@ int main(void) {
   board_init();
   init();
   tusb_init();
-
-  multicore_launch_core1(core1_entry);
 
   while (1) {
     tud_task();  // tinyusb device task

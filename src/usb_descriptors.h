@@ -21,7 +21,7 @@ enum {
 #define HID_STRING_MAXIMUM_N(x, n) HID_REPORT_ITEM(x, 9, RI_TYPE_LOCAL, n)
 
 // Joystick Report Descriptor Template - Based off Drewol/rp2040-gamecon
-// Button Map | X | Y
+// Button Map (Axis removed)
 #define GAMECON_REPORT_DESC_JOYSTICK(...)                                      \
   HID_USAGE_PAGE(HID_USAGE_PAGE_DESKTOP),                                      \
       HID_USAGE(HID_USAGE_DESKTOP_JOYSTICK),                                   \
@@ -34,8 +34,8 @@ enum {
       HID_INPUT(HID_CONSTANT | HID_VARIABLE | HID_ABSOLUTE),                   \
       HID_USAGE_PAGE(HID_USAGE_PAGE_DESKTOP), HID_LOGICAL_MIN(0x00),           \
       HID_LOGICAL_MAX_N(0x00ff, 2),                                            \
-      HID_USAGE(HID_USAGE_DESKTOP_X), /*Joystick*/                             \
-      HID_USAGE(HID_USAGE_DESKTOP_Y), HID_REPORT_COUNT(2), HID_REPORT_SIZE(8), \
+      HID_USAGE(0), /*Joystick*/                             \
+      HID_USAGE(0), HID_REPORT_COUNT(2), HID_REPORT_SIZE(8), \
       HID_INPUT(HID_DATA | HID_VARIABLE | HID_ABSOLUTE), HID_COLLECTION_END
 
 // Light Map
@@ -45,7 +45,7 @@ enum {
       __VA_ARGS__ HID_REPORT_COUNT(LED_GPIO_SIZE + (WS2812B_LED_ZONES * 3)),   \
       HID_REPORT_SIZE(8), HID_LOGICAL_MIN(0x00), HID_LOGICAL_MAX_N(0x00ff, 2), \
       HID_USAGE_PAGE(HID_USAGE_PAGE_ORDINAL), HID_STRING_MINIMUM(4),           \
-      HID_STRING_MAXIMUM(16), HID_USAGE_MIN(1), HID_USAGE_MAX(16),             \
+      HID_STRING_MAXIMUM(27), HID_USAGE_MIN(1), HID_USAGE_MAX(27),             \
       HID_OUTPUT(HID_DATA | HID_VARIABLE | HID_ABSOLUTE), HID_REPORT_COUNT(1), \
       HID_REPORT_SIZE(8), /*Padding*/                                          \
       HID_INPUT(HID_CONSTANT | HID_VARIABLE | HID_ABSOLUTE),                   \

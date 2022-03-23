@@ -159,25 +159,37 @@ uint8_t const* tud_descriptor_configuration_cb(uint8_t index) {
 // array of pointer to string descriptors
 char const* string_desc_arr[] = {
     (const char[]){0x09, 0x04},  // 0: is supported language is English (0x0409)
-    "SpeedyPotato",              // 1: Manufacturer
-    "Pico Game Controller",      // 2: Product
+    "Lain",              // 1: Manufacturer
+    "PMSmall",      // 2: Product
     "123456",                    // 3: Serials, should use chip ID
-    "Button 1",
-    "Button 2",
-    "Button 3",
-    "Button 4",
-    "Button 5",
-    "Button 6",
-    "Button 7",
-    "Button 8",
-    "Button 9",
-    "Button 10",
-    "Red 1",
-    "Green 1",
-    "Blue 1",
-    "Red 2",
-    "Green 2",
-    "Blue 2",
+    "Button 1 R",
+    "Button 1 G",
+    "Button 1 B",
+    "Button 2 R",
+    "Button 2 G",
+    "Button 2 B",
+    "Button 3 R",
+    "Button 3 G",
+    "Button 3 B",
+    "Button 4 R",
+    "Button 4 G",
+    "Button 4 B",
+    "Button 5 R",
+    "Button 5 G",
+    "Button 5 B",
+    "Button 6 R",
+    "Button 6 G",
+    "Button 6 B",
+    "Button 7 R",
+    "Button 7 G",
+    "Button 7 B",
+    "Button 8 R",
+    "Button 8 G",
+    "Button 8 B",
+    "Button 9 R",
+    "Button 9 G",
+    "Button 9 B",
+    
 };
 
 static uint16_t _desc_str[64];
