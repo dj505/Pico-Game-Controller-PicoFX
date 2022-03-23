@@ -1,9 +1,10 @@
 # Pico-Game-Controller-PNM
-Minor modification to Speedypotato's PGC firmware to support 9-button Pop'n music mini-controllers with corresponding lighting 
-(Major thanks to KyubiFox and Speedy for help)
+Minor modification to Speedypotato's PGC firmware to support 9-button Pop'n music mini-controllers with corresponding lighting   
+(Major thanks to KyubiFox and Speedy for help)  
 Speedy's discord: https://discord.gg/MmuKd73XbY
 
-Demo of lighting effects
+Demo of lighting effects  
+
 ![PMSMall](demo.gif)
 
 Currently working/fixed:
