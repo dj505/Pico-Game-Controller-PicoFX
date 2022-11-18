@@ -1,1 +1,4 @@
 build/
+build_uf2/
+src/pico-sdk
+pico-sdk

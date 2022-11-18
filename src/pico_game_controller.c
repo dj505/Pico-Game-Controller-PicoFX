@@ -46,15 +46,12 @@ union {
 } lights_report;
 
 uint32_t led_color[WS2812B_LED_SIZE][3] = {
-{255, 255, 255},  // White
-{235, 232, 52},   // Yellow
-{0, 255, 0},      // Green
-{0, 0, 255},      // Blue
-{255, 0, 0},      // Red 
-{0, 0, 255},      // Blue
-{0, 255, 0},      // Green
-{235, 232, 52},   // Yellow
-{255, 255, 255},  // White
+  {0, 0, 255},
+  {255, 0, 0},
+  {235, 232, 52},
+  {235, 232, 52},
+  {255, 0, 0},
+  {0, 0, 255},
 };
 
 
@@ -104,13 +101,13 @@ void ws2812b_color_cycle(uint32_t counter) {
  * Reactive Effect
  **/
 void ws2812b_react() {
-  for (int i = 0; i < WS2812B_LED_SIZE / 2; ++i) {
+  for (int i = 0; i < WS2812B_LED_SIZE; ++i) {
       if (!gpio_get(SW_GPIO[i])) {
         put_pixel(urgb_u32(led_color[i][0], led_color[i][1], led_color[i][2]));
-        put_pixel(urgb_u32(led_color[i][0], led_color[i][1], led_color[i][2]));
+        //put_pixel(urgb_u32(led_color[i][0], led_color[i][1], led_color[i][2]));
       } else {
         put_pixel(urgb_u32(0, 0, 0));
-        put_pixel(urgb_u32(0, 0, 0));
+        //put_pixel(urgb_u32(0, 0, 0));
       }
   }
 }
@@ -122,7 +119,7 @@ void ws2812b_react() {
  **/
 void ws2812b_update(uint32_t counter) {
   if (time_us_64() - reactive_timeout_timestamp >= REACTIVE_TIMEOUT_MAX) {
-    ws2812b_react();
+    ws2812b_color_cycle(counter);
   } else {
     for (int i = 0; i < WS2812B_LED_ZONES; i++) {
       for (int j = 0; j < WS2812B_LEDS_PER_ZONE; j++) {
@@ -272,7 +269,7 @@ void init() {
   kbm_report = false;
 
   // Joy/KB Mode Switching
-  if (!gpio_get(SW_GPIO[0])) {
+  if (!gpio_get(SW_GPIO[10])) {
     loop_mode = &key_mode;
     joy_mode_check = false;
   } else {
@@ -281,7 +278,7 @@ void init() {
   }
 
   // Disable RGB
-  if (gpio_get(SW_GPIO[8])) {
+  if (gpio_get(SW_GPIO[11])) {
     multicore_launch_core1(core1_entry);
   }
 }
