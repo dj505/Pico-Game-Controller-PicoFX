@@ -202,6 +202,9 @@ void key_mode() {
       }
     }
 
+    tud_hid_n_report(0x00, REPORT_ID_KEYBOARD, &nkro_report,
+                     sizeof(nkro_report));
+
     // Alternate reports
     kbm_report = !kbm_report;
   }
