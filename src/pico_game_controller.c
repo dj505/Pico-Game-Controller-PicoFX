@@ -26,8 +26,6 @@ PIO pio, pio_1;
 bool prev_sw_val[SW_GPIO_SIZE];
 uint64_t sw_timestamp[SW_GPIO_SIZE];
 
-bool kbm_report;
-
 uint64_t reactive_timeout_timestamp;
 
 void (*loop_mode)();
@@ -204,9 +202,6 @@ void key_mode() {
 
     tud_hid_n_report(0x00, REPORT_ID_KEYBOARD, &nkro_report,
                      sizeof(nkro_report));
-
-    // Alternate reports
-    kbm_report = !kbm_report;
   }
 }
 
@@ -267,9 +262,6 @@ void init() {
     gpio_init(LED_GPIO[i]);
     gpio_set_dir(LED_GPIO[i], GPIO_OUT);
   }
-
-  // Set listener bools
-  kbm_report = false;
 
   // Joy/KB Mode Switching
   if (!gpio_get(SW_GPIO[10])) {
